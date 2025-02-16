@@ -6,17 +6,19 @@ import numpy as np
 import dlib
 import streamlit as st
 
+# مسار جديد للملف داخل /tmp/ ليكون متاحًا في بيئة Streamlit
+MODEL_PATH = "/tmp/shape_predictor_68_face_landmarks.dat"
+
 # Ensure the shape predictor file is downloaded
 def download_shape_predictor():
-    file_path = "shape_predictor_68_face_landmarks.dat"
-    compressed_path = file_path + ".bz2"
+    compressed_path = MODEL_PATH + ".bz2"
     
-    if not os.path.exists(file_path):
+    if not os.path.exists(MODEL_PATH):
         st.info("Downloading shape predictor model...")
         url = "https://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2"
         urllib.request.urlretrieve(url, compressed_path)
         
-        with bz2.BZ2File(compressed_path, "rb") as compressed_file, open(file_path, "wb") as output_file:
+        with bz2.BZ2File(compressed_path, "rb") as compressed_file, open(MODEL_PATH, "wb") as output_file:
             output_file.write(compressed_file.read())
         
         st.success("Download complete!")
@@ -25,7 +27,7 @@ download_shape_predictor()
 
 # Load face detector and shape predictor
 detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+predictor = dlib.shape_predictor(MODEL_PATH)
 
 # Function to detect and draw facial landmarks
 def detect_landmarks(frame):
