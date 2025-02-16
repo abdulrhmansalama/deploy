@@ -1,14 +1,33 @@
+import os
+import bz2
+import urllib.request
 import cv2
 import numpy as np
 import dlib
 import streamlit as st
-from deepface import DeepFace
+
+# Ensure the shape predictor file is downloaded
+def download_shape_predictor():
+    file_path = "shape_predictor_68_face_landmarks.dat"
+    compressed_path = file_path + ".bz2"
+    
+    if not os.path.exists(file_path):
+        st.info("Downloading shape predictor model...")
+        url = "https://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2"
+        urllib.request.urlretrieve(url, compressed_path)
+        
+        with bz2.BZ2File(compressed_path, "rb") as compressed_file, open(file_path, "wb") as output_file:
+            output_file.write(compressed_file.read())
+        
+        st.success("Download complete!")
+
+download_shape_predictor()
 
 # Load face detector and shape predictor
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
-# Function to detect and draw advanced facial recognition features
+# Function to detect and draw facial landmarks
 def detect_landmarks(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = detector(gray)
@@ -19,9 +38,9 @@ def detect_landmarks(frame):
         landmarks = predictor(gray, face)
         points = [(landmarks.part(n).x, landmarks.part(n).y) for n in range(68)]
         
-        # Draw futuristic grid and points
+        # Draw circles for each landmark
         for (x, y) in points:
-            cv2.circle(overlay, (x, y), 3, (0, 255, 255), -1, cv2.LINE_AA)
+            cv2.circle(overlay, (x, y), 2, (0, 255, 0), -1, cv2.LINE_AA)
         
         # Define landmark connections
         connections = [
@@ -29,40 +48,26 @@ def detect_landmarks(frame):
             (36, 41), (42, 47), (48, 59), (60, 67)
         ]
         
-        # Draw connected lines
+        # Draw connected lines with anti-aliasing effect
         for start, end in connections:
             for i in range(start, end):
                 cv2.line(overlay, points[i], points[i + 1], (0, 255, 255), 2, cv2.LINE_AA)
         
-        # Adding AI-based face recognition info
-        try:
-            analysis = DeepFace.analyze(frame, actions=['age', 'gender', 'emotion'], enforce_detection=False)
-            age = analysis[0]['age']
-            gender = analysis[0]['dominant_gender']
-            emotion = analysis[0]['dominant_emotion']
-            cv2.putText(overlay, f'Age: {age}, Gender: {gender}', (face.left(), face.top() - 20), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2, cv2.LINE_AA)
-            cv2.putText(overlay, f'Emotion: {emotion}', (face.left(), face.top() - 50), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2, cv2.LINE_AA)
-        except:
-            pass
+        # Close shapes (eyes, lips)
+        cv2.line(overlay, points[36], points[41], (0, 255, 255), 2, cv2.LINE_AA)
+        cv2.line(overlay, points[42], points[47], (0, 255, 255), 2, cv2.LINE_AA)
+        cv2.line(overlay, points[48], points[59], (0, 255, 255), 2, cv2.LINE_AA)
+        cv2.line(overlay, points[60], points[67], (0, 255, 255), 2, cv2.LINE_AA)
     
     # Blend overlay with the original frame
     cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
     return frame
 
-# Streamlit App UI
+# Streamlit App
 def main():
-    st.set_page_config(page_title="Advanced Face Recognition", layout="wide")
-    st.markdown("""
-        <style>
-            .css-1d391kg {background-color: #1E1E1E !important; color: white !important;}
-            .stButton>button {border-radius: 10px; padding: 10px; font-size: 18px;}
-        </style>
-    """, unsafe_allow_html=True)
-    
-    st.title("🔍 Advanced Face Recognition System")
-    run = st.button("Start Face Detection")
+    st.set_page_config(page_title="Professional Face Recognition", layout="wide")
+    st.title("Face Landmark Detection - Professional Look")
+    run = st.checkbox("Run Face Detection")
     
     if run:
         cap = cv2.VideoCapture(0)
