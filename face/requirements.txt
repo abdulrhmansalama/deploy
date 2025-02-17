@@ -1,4 +1,9 @@
-opencv-python-headless
-numpy
-dlib
-streamlit
+streamlit==1.32.0
+mediapipe==0.10.0
+numpy==1.26.0
+opencv-python==4.8.1.78
+pandas==2.1.1
+plotly==5.18.0
+gtts==2.4.0
+sqlite3==0.0.1
+
